@@ -1,18 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { Sidebar } from './components/Sidebar';
-import { TopBar } from './components/TopBar';
-import { MobileNav } from './components/MobileNav';
-import { Dashboard } from './pages/Dashboard';
-import { SheepManager } from './pages/SheepManager';
-import { Investments } from './pages/Investments';
-import { Marketplace } from './pages/Marketplace';
-import { CCTV } from './pages/CCTV';
-import { Qurban } from './pages/Qurban';
-import { Settings } from './pages/Settings';
-import { LandingPage } from './components/LandingPage';
-import { LoginPage } from './components/LoginPage';
-import { Role, Language, User } from './types';
-import { db } from './services/db';
+import { Sidebar } from '../components/Sidebar';
+import { TopBar } from '../components/TopBar';
+import { MobileNav } from '../components/MobileNav';
+import { Dashboard } from '../pages/Dashboard';
+import { SheepManager } from '../pages/SheepManager';
+import { Investments } from '../pages/Investments';
+import { Marketplace } from '../pages/Marketplace';
+import { CCTV } from '../pages/CCTV';
+import { Qurban } from '../pages/Qurban';
+import { Settings } from '../pages/Settings';
+import { LandingPage } from '../components/LandingPage';
+import { LoginPage } from '../components/LoginPage';
+import { Role, Language, User } from '../types';
+import { db } from '../services/db';
 import { Sprout, Bell, Search } from 'lucide-react';
 
 const App: React.FC = () => {
