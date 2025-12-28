@@ -1,3 +1,4 @@
+
 import { Role, Sheep, SheepStatus, Cage, InvestmentPackage, MarketProduct, User } from './types';
 
 // Seed Data
@@ -99,8 +100,12 @@ export const MOCK_PRODUCTS: MarketProduct[] = [
 export const CURRENT_USER: User = {
   id: 'USER-1',
   name: 'Ali Investor',
+  // Fix: Added missing required email field
+  email: 'ali.investor@example.com',
   role: Role.INVESTOR, // Default role for demo, changable
   avatarUrl: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=100',
+  // Fix: Added missing required status property
+  status: 'Active',
   investments: [
     { id: 'INV-1', packageId: 'PKG-1', units: 1, purchaseDate: '2023-01-20', status: 'Active', currentValue: 4600000 }
   ],

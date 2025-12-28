@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { Role, User, Language, SheepStatus, Sheep } from '../types';
 import { TRANSLATIONS } from '../constants';
@@ -40,7 +41,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ role, lang, onNavigate }) 
   useEffect(() => {
     const fetchData = async () => {
       const u = await db.getUser();
-      const s = await db.getSheep();
+      // Fix: Corrected method call from non-existent getSheep() to sheep.find()
+      const s = await db.sheep.find();
       setUser(u);
       setSheep(s);
     };

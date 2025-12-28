@@ -11,15 +11,12 @@ let clientPromise: Promise<MongoClient>;
 
 if (!process.env.NEXT_PUBLIC_SIMULATION_MODE) {
   // In a real Next.js app, this connects to your Railway MongoDB
-  if (process.env.NODE_ENV === 'development') {
-    if (!(globalThis as any)._mongoClientPromise) {
-      client = new MongoClient(uri, options);
-      (globalThis as any)._mongoClientPromise = client.connect();
-    }
-    clientPromise = (globalThis as any)._mongoClientPromise;
-  } else {
+  if (typeof window === 'undefined') {
     client = new MongoClient(uri, options);
     clientPromise = client.connect();
+  } else {
+    // Browser fallback
+    clientPromise = Promise.resolve(null as any);
   }
 } else {
   // Fallback for simulation

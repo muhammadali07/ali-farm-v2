@@ -1,18 +1,12 @@
+
 import { GoogleGenAI } from "@google/genai";
 
-let genAI: GoogleGenAI | null = null;
-
-if (process.env.API_KEY) {
-  genAI = new GoogleGenAI({ apiKey: process.env.API_KEY });
-}
-
+// Fix: Always use process.env.API_KEY directly and follow recommended initialization inside the service function
 export const askFarmAssistant = async (prompt: string, context?: string): Promise<string> => {
-  if (!genAI) {
-    return "AI service is not configured (Missing API Key).";
-  }
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
   try {
-    const model = 'gemini-2.5-flash';
+    const model = 'gemini-3-flash-preview';
     const systemInstruction = `You are an expert sheep farming consultant for 'Ali Farm'. 
     You provide advice on sheep health, investment ROI, and feed management.
     Keep answers concise, professional, and practical.
@@ -20,7 +14,8 @@ export const askFarmAssistant = async (prompt: string, context?: string): Promis
 
     const fullPrompt = context ? `Context: ${context}\n\nQuestion: ${prompt}` : prompt;
 
-    const response = await genAI.models.generateContent({
+    // Fix: Using correct object parameter style and string content as per guidelines
+    const response = await ai.models.generateContent({
       model: model,
       contents: fullPrompt,
       config: {
@@ -28,6 +23,7 @@ export const askFarmAssistant = async (prompt: string, context?: string): Promis
       }
     });
 
+    // Fix: Accessing text property directly (it's a getter, not a method)
     return response.text || "No response generated.";
   } catch (error) {
     console.error("Gemini API Error:", error);

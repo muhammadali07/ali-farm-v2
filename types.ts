@@ -51,7 +51,7 @@ export interface Cage {
   name: string;
   capacity: number;
   occupied: number;
-  cctvUrl?: string; // Simulated URL
+  cctvUrl?: string;
 }
 
 export interface InvestmentPackage {
@@ -60,7 +60,7 @@ export interface InvestmentPackage {
   description: string;
   pricePerUnit: number;
   durationMonths: number;
-  estimatedRoi: number; // Percentage
+  estimatedRoi: number;
   type: 'Single' | 'Batch' | 'Cage';
 }
 
@@ -92,10 +92,12 @@ export interface QurbanSaving {
 }
 
 export interface User {
-  id: string;
+  id: string; // This will be the sequential AF-xxx ID
   name: string;
+  email: string;
   role: Role;
   avatarUrl: string;
+  status: 'Active' | 'Inactive';
   investments?: UserInvestment[];
   qurban?: QurbanSaving;
 }
