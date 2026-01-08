@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState, useEffect } from 'react';
 import { Sprout, TrendingUp, ShieldCheck, ArrowRight, CheckCircle, Smartphone, Play, Globe, PiggyBank, Calendar, Heart, Menu, X, Star, Leaf, Users, ShoppingBag, Trash2, MapPin, User, Phone, Truck, CreditCard, ChevronLeft, QrCode, Building2, Banknote, Copy, ChevronRight, HandHeart, Info, Clock, MessageCircle, Send, Calculator, BarChart3, FileText, Loader2 } from 'lucide-react';
 import { MOCK_PRODUCTS, MOCK_PACKAGES } from '../constants';
@@ -5,9 +7,9 @@ import { db } from '../services/db';
 import { AppConfig } from '../types';
 import { AIChat } from './AIChat';
 import { Language } from '../types';
+import Link from 'next/link';
 
 interface LandingPageProps {
-  onLogin: () => void;
   lang: string;
 }
 
@@ -25,13 +27,19 @@ interface CustomerData {
   address: string;
 }
 
-export const LandingPage: React.FC<LandingPageProps> = ({ onLogin, lang }) => {
+export const LandingPage: React.FC<LandingPageProps> = ({ lang }) => {
   const isId = lang === 'ID';
   const ADMIN_WA = "6281553335534";
 
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [config, setConfig] = useState<AppConfig | null>(null);
+  const [config, setConfig] = useState<AppConfig>({
+    features: {
+      investment: true,
+      qurban: true,
+      marketplace: true
+    }
+  });
   const [cart, setCart] = useState<CartItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
@@ -40,13 +48,13 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLogin, lang }) => {
   const [orderId, setOrderId] = useState('');
   const [qurbanServiceType, setQurbanServiceType] = useState<'SHIPPED' | 'CUSTODY'>('SHIPPED');
   const [deliveryDate, setDeliveryDate] = useState('');
-  
+
   const COURIERS = [
     { id: 'jne', name: 'JNE Reguler', price: 12000, est: '2-3 Hari' },
     { id: 'jnt', name: 'J&T Express', price: 15000, est: '1-3 Hari' },
     { id: 'sicepat', name: 'SiCepat HALU', price: 10000, est: '2-4 Hari' },
   ];
-  
+
   const TAXI_FARM = { id: 'taxifarm', name: 'TaxiFarm', price: 50000, originalPrice: 100000, est: 'Sesuai Jadwal' };
   const [selectedCourier, setSelectedCourier] = useState(COURIERS[0]);
 
@@ -64,18 +72,14 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLogin, lang }) => {
   }, []);
 
   useEffect(() => {
+    // Initialize config from localStorage or use defaults
+    db.init();
     const fetchConfig = async () => {
         const data = await db.getConfig();
         setConfig(data);
     };
     fetchConfig();
   }, []);
-
-  if (!config) return (
-     <div className="h-screen w-full flex items-center justify-center bg-slate-900">
-        <Loader2 className="text-agri-500 animate-spin" size={32} />
-     </div>
-  );
 
   const scrollToSection = (e: React.MouseEvent, href: string) => {
     e.preventDefault();
@@ -149,9 +153,9 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLogin, lang }) => {
               <ShoppingBag size={22} />
               {cart.length > 0 && <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold">{cart.length}</span>}
             </button>
-            <button onClick={onLogin} className={`px-6 py-2 rounded-full text-sm font-bold ${scrolled ? 'bg-slate-900 text-white' : 'bg-white text-slate-900'}`}>
+            <Link href="/login" className={`px-6 py-2 rounded-full text-sm font-bold ${scrolled ? 'bg-slate-900 text-white' : 'bg-white text-slate-900'}`}>
               {isId ? 'Masuk' : 'Login'}
-            </button>
+            </Link>
           </div>
         </div>
       </nav>
@@ -257,6 +261,101 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLogin, lang }) => {
                   <h3 className="text-xl font-bold mb-2">{pkg.name}</h3>
                   <p className="text-3xl font-bold text-slate-900 mb-6">Rp {pkg.pricePerUnit.toLocaleString()}</p>
                   <button onClick={() => addToCart({id: pkg.id, name: pkg.name, price: pkg.pricePerUnit, type: 'Investment'})} className="w-full py-3 bg-slate-900 text-white rounded-xl font-bold">Investasi</button>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Qurban */}
+      {config.features.qurban && (
+        <section id="qurban" className="py-24 bg-slate-50">
+          <div className="max-w-7xl mx-auto px-6">
+            <div className="text-center mb-16">
+              <h2 className="text-3xl font-bold mb-4">Tabung Qurban</h2>
+              <p className="text-slate-600 max-w-2xl mx-auto">Rencanakan Qurban Anda dari sekarang dengan sistem tabungan yang mudah dan transparan.</p>
+            </div>
+            <div className="grid md:grid-cols-2 gap-8">
+              <div className="bg-white p-8 rounded-3xl shadow-lg">
+                <div className="flex items-center gap-4 mb-6">
+                  <div className="w-12 h-12 bg-agri-100 rounded-xl flex items-center justify-center">
+                    <PiggyBank className="text-agri-600" size={24} />
+                  </div>
+                  <h3 className="text-2xl font-bold">Paket Tabungan</h3>
+                </div>
+                <ul className="space-y-3 mb-6">
+                  <li className="flex items-center gap-3">
+                    <CheckCircle className="text-agri-600" size={20} />
+                    <span>Tabung mulai dari Rp 100.000/bulan</span>
+                  </li>
+                  <li className="flex items-center gap-3">
+                    <CheckCircle className="text-agri-600" size={20} />
+                    <span>Pantauan perkembangan hewan实时</span>
+                  </li>
+                  <li className="flex items-center gap-3">
+                    <CheckCircle className="text-agri-600" size={20} />
+                    <span>Penyaluran sesuai syariah</span>
+                  </li>
+                </ul>
+                <button onClick={() => addToCart({id: 'qurban-basic', name: 'Tabungan Qurban Basic', price: 100000, type: 'Qurban'})} className="w-full py-3 bg-agri-600 text-white rounded-xl font-bold hover:bg-agri-700 transition">Mulai Menabung</button>
+              </div>
+              <div className="bg-white p-8 rounded-3xl shadow-lg">
+                <div className="flex items-center gap-4 mb-6">
+                  <div className="w-12 h-12 bg-agri-100 rounded-xl flex items-center justify-center">
+                    <Heart className="text-agri-600" size={24} />
+                  </div>
+                  <h3 className="text-2xl font-bold">Qurban Premium</h3>
+                </div>
+                <ul className="space-y-3 mb-6">
+                  <li className="flex items-center gap-3">
+                    <CheckCircle className="text-agri-600" size={20} />
+                    <span>Kambing/Domba premium</span>
+                  </li>
+                  <li className="flex items-center gap-3">
+                    <CheckCircle className="text-agri-600" size={20} />
+                    <span>Dokumentasi lengkap</span>
+                  </li>
+                  <li className="flex items-center gap-3">
+                    <CheckCircle className="text-agri-600" size={20} />
+                    <span>Antar ke lokasi Anda</span>
+                  </li>
+                </ul>
+                <button onClick={() => addToCart({id: 'qurban-premium', name: 'Qurban Premium', price: 2500000, type: 'Qurban'})} className="w-full py-3 bg-agri-600 text-white rounded-xl font-bold hover:bg-agri-700 transition">Pesan Sekarang</button>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Marketplace */}
+      {config.features.marketplace && (
+        <section id="marketplace" className="py-24 bg-white">
+          <div className="max-w-7xl mx-auto px-6">
+            <h2 className="text-3xl font-bold text-center mb-16">Marketplace</h2>
+            <div className="grid md:grid-cols-4 gap-6">
+              {MOCK_PRODUCTS.map(product => (
+                <div key={product.id} className="bg-white rounded-2xl shadow-md overflow-hidden hover:shadow-xl transition-all group">
+                  <div className="relative h-48 overflow-hidden">
+                    <img src={product.image} alt={product.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300" />
+                    {product.discount && (
+                      <span className="absolute top-3 left-3 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full">
+                        -{product.discount}%
+                      </span>
+                    )}
+                  </div>
+                  <div className="p-4">
+                    <h3 className="font-bold text-lg mb-2">{product.name}</h3>
+                    <div className="flex items-center gap-2 mb-3">
+                      <span className="text-agri-600 font-bold text-lg">Rp {product.price.toLocaleString()}</span>
+                      {product.originalPrice && (
+                        <span className="text-slate-400 text-sm line-through">Rp {product.originalPrice.toLocaleString()}</span>
+                      )}
+                    </div>
+                    <button onClick={() => addToCart({id: product.id, name: product.name, price: product.price, type: 'Product'})} className="w-full py-2 bg-slate-900 text-white rounded-lg font-medium hover:bg-slate-800 transition">
+                      + Keranjang
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
