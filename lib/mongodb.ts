@@ -1,31 +1,26 @@
+// NOTE: This file is intended for a Node.js/Next.js Server Environment.
+// In this browser-only demo, we use services/db.ts to simulate database persistence.
+
 import { MongoClient } from 'mongodb';
 
-if (!process.env.MONGODB_URI) {
-  throw new Error('Please add your Mongo URI to .env.local');
-}
-
-const uri = process.env.MONGODB_URI;
+const uri = "mongodb://mongo:ucROwLYfkzIGTIjrWdlPczZiDbBHYfRg@hopper.proxy.rlwy.net:37265";
 const options = {};
 
-let client: MongoClient;
+let client;
 let clientPromise: Promise<MongoClient>;
 
-declare global {
-  var mongoClientPromise: Promise<MongoClient>;
-}
-
-if (process.env.NODE_ENV === 'development') {
-  // In development mode, use a global variable so that the value
-  // is preserved across module reloads caused by HMR (Hot Module Replacement).
-  if (!global.mongoClientPromise) {
+if (!process.env.NEXT_PUBLIC_SIMULATION_MODE) {
+  // In a real Next.js app, this connects to your Railway MongoDB
+  if (typeof window === 'undefined') {
     client = new MongoClient(uri, options);
-    global.mongoClientPromise = client.connect();
+    clientPromise = client.connect();
+  } else {
+    // Browser fallback
+    clientPromise = Promise.resolve(null as any);
   }
-  clientPromise = global.mongoClientPromise;
 } else {
-  // In production mode, it's best to not use a global variable.
-  client = new MongoClient(uri, options);
-  clientPromise = client.connect();
+  // Fallback for simulation
+  clientPromise = Promise.resolve(null as any);
 }
 
 export default clientPromise;
