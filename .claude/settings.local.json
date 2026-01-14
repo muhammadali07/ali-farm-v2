@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run dev:*)",
+      "Bash(curl:*)",
+      "Bash(npm install:*)",
+      "Bash(npx tsc:*)",
+      "Bash(claude mcp add context7 -- npx -y @upstash/context7-mcp --api-key ctx7sk-fc344f10-3576-4e0a-b0a7-844bc806992b)",
+      "mcp__context7__resolve-library-id",
+      "mcp__context7__query-docs",
+      "WebSearch"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
