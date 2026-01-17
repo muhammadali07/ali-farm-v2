@@ -717,7 +717,7 @@ Metode: ${PAYMENT_METHODS.find(m => m.id === selectedPayment)?.name}`;
           </div>
           
           <div className="pt-12 border-t border-white/5 flex flex-col md:flex-row items-center justify-between gap-6 text-slate-600 text-sm font-medium">
-            <p>© 2024 Ali Farm. All rights reserved.</p>
+            <p>© 2023 Ali Farm. All rights reserved.</p>
             <div className="flex items-center gap-2">
               <ShieldCheck size={16} className="text-agri-600" /> Terverifikasi & Amanah
             </div>

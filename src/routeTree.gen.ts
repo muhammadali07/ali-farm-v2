@@ -15,10 +15,13 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthSheepRouteImport } from './routes/_auth.sheep'
 import { Route as AuthSettingsRouteImport } from './routes/_auth.settings'
 import { Route as AuthQurbanRouteImport } from './routes/_auth.qurban'
+import { Route as AuthMyInvestmentsRouteImport } from './routes/_auth.my-investments'
 import { Route as AuthMarketplaceRouteImport } from './routes/_auth.marketplace'
+import { Route as AuthInvestorContractsRouteImport } from './routes/_auth.investor-contracts'
 import { Route as AuthInvestmentsRouteImport } from './routes/_auth.investments'
 import { Route as AuthDashboardRouteImport } from './routes/_auth.dashboard'
 import { Route as AuthCctvRouteImport } from './routes/_auth.cctv'
+import { Route as AuthInvestorContractsContractIdRouteImport } from './routes/_auth.investor-contracts.$contractId'
 
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
@@ -49,9 +52,19 @@ const AuthQurbanRoute = AuthQurbanRouteImport.update({
   path: '/qurban',
   getParentRoute: () => AuthRoute,
 } as any)
+const AuthMyInvestmentsRoute = AuthMyInvestmentsRouteImport.update({
+  id: '/my-investments',
+  path: '/my-investments',
+  getParentRoute: () => AuthRoute,
+} as any)
 const AuthMarketplaceRoute = AuthMarketplaceRouteImport.update({
   id: '/marketplace',
   path: '/marketplace',
+  getParentRoute: () => AuthRoute,
+} as any)
+const AuthInvestorContractsRoute = AuthInvestorContractsRouteImport.update({
+  id: '/investor-contracts',
+  path: '/investor-contracts',
   getParentRoute: () => AuthRoute,
 } as any)
 const AuthInvestmentsRoute = AuthInvestmentsRouteImport.update({
@@ -69,6 +82,12 @@ const AuthCctvRoute = AuthCctvRouteImport.update({
   path: '/cctv',
   getParentRoute: () => AuthRoute,
 } as any)
+const AuthInvestorContractsContractIdRoute =
+  AuthInvestorContractsContractIdRouteImport.update({
+    id: '/$contractId',
+    path: '/$contractId',
+    getParentRoute: () => AuthInvestorContractsRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -76,10 +95,13 @@ export interface FileRoutesByFullPath {
   '/cctv': typeof AuthCctvRoute
   '/dashboard': typeof AuthDashboardRoute
   '/investments': typeof AuthInvestmentsRoute
+  '/investor-contracts': typeof AuthInvestorContractsRouteWithChildren
   '/marketplace': typeof AuthMarketplaceRoute
+  '/my-investments': typeof AuthMyInvestmentsRoute
   '/qurban': typeof AuthQurbanRoute
   '/settings': typeof AuthSettingsRoute
   '/sheep': typeof AuthSheepRoute
+  '/investor-contracts/$contractId': typeof AuthInvestorContractsContractIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -87,10 +109,13 @@ export interface FileRoutesByTo {
   '/cctv': typeof AuthCctvRoute
   '/dashboard': typeof AuthDashboardRoute
   '/investments': typeof AuthInvestmentsRoute
+  '/investor-contracts': typeof AuthInvestorContractsRouteWithChildren
   '/marketplace': typeof AuthMarketplaceRoute
+  '/my-investments': typeof AuthMyInvestmentsRoute
   '/qurban': typeof AuthQurbanRoute
   '/settings': typeof AuthSettingsRoute
   '/sheep': typeof AuthSheepRoute
+  '/investor-contracts/$contractId': typeof AuthInvestorContractsContractIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -100,10 +125,13 @@ export interface FileRoutesById {
   '/_auth/cctv': typeof AuthCctvRoute
   '/_auth/dashboard': typeof AuthDashboardRoute
   '/_auth/investments': typeof AuthInvestmentsRoute
+  '/_auth/investor-contracts': typeof AuthInvestorContractsRouteWithChildren
   '/_auth/marketplace': typeof AuthMarketplaceRoute
+  '/_auth/my-investments': typeof AuthMyInvestmentsRoute
   '/_auth/qurban': typeof AuthQurbanRoute
   '/_auth/settings': typeof AuthSettingsRoute
   '/_auth/sheep': typeof AuthSheepRoute
+  '/_auth/investor-contracts/$contractId': typeof AuthInvestorContractsContractIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -113,10 +141,13 @@ export interface FileRouteTypes {
     | '/cctv'
     | '/dashboard'
     | '/investments'
+    | '/investor-contracts'
     | '/marketplace'
+    | '/my-investments'
     | '/qurban'
     | '/settings'
     | '/sheep'
+    | '/investor-contracts/$contractId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -124,10 +155,13 @@ export interface FileRouteTypes {
     | '/cctv'
     | '/dashboard'
     | '/investments'
+    | '/investor-contracts'
     | '/marketplace'
+    | '/my-investments'
     | '/qurban'
     | '/settings'
     | '/sheep'
+    | '/investor-contracts/$contractId'
   id:
     | '__root__'
     | '/'
@@ -136,10 +170,13 @@ export interface FileRouteTypes {
     | '/_auth/cctv'
     | '/_auth/dashboard'
     | '/_auth/investments'
+    | '/_auth/investor-contracts'
     | '/_auth/marketplace'
+    | '/_auth/my-investments'
     | '/_auth/qurban'
     | '/_auth/settings'
     | '/_auth/sheep'
+    | '/_auth/investor-contracts/$contractId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -192,11 +229,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthQurbanRouteImport
       parentRoute: typeof AuthRoute
     }
+    '/_auth/my-investments': {
+      id: '/_auth/my-investments'
+      path: '/my-investments'
+      fullPath: '/my-investments'
+      preLoaderRoute: typeof AuthMyInvestmentsRouteImport
+      parentRoute: typeof AuthRoute
+    }
     '/_auth/marketplace': {
       id: '/_auth/marketplace'
       path: '/marketplace'
       fullPath: '/marketplace'
       preLoaderRoute: typeof AuthMarketplaceRouteImport
+      parentRoute: typeof AuthRoute
+    }
+    '/_auth/investor-contracts': {
+      id: '/_auth/investor-contracts'
+      path: '/investor-contracts'
+      fullPath: '/investor-contracts'
+      preLoaderRoute: typeof AuthInvestorContractsRouteImport
       parentRoute: typeof AuthRoute
     }
     '/_auth/investments': {
@@ -220,14 +271,36 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthCctvRouteImport
       parentRoute: typeof AuthRoute
     }
+    '/_auth/investor-contracts/$contractId': {
+      id: '/_auth/investor-contracts/$contractId'
+      path: '/$contractId'
+      fullPath: '/investor-contracts/$contractId'
+      preLoaderRoute: typeof AuthInvestorContractsContractIdRouteImport
+      parentRoute: typeof AuthInvestorContractsRoute
+    }
   }
 }
+
+interface AuthInvestorContractsRouteChildren {
+  AuthInvestorContractsContractIdRoute: typeof AuthInvestorContractsContractIdRoute
+}
+
+const AuthInvestorContractsRouteChildren: AuthInvestorContractsRouteChildren = {
+  AuthInvestorContractsContractIdRoute: AuthInvestorContractsContractIdRoute,
+}
+
+const AuthInvestorContractsRouteWithChildren =
+  AuthInvestorContractsRoute._addFileChildren(
+    AuthInvestorContractsRouteChildren,
+  )
 
 interface AuthRouteChildren {
   AuthCctvRoute: typeof AuthCctvRoute
   AuthDashboardRoute: typeof AuthDashboardRoute
   AuthInvestmentsRoute: typeof AuthInvestmentsRoute
+  AuthInvestorContractsRoute: typeof AuthInvestorContractsRouteWithChildren
   AuthMarketplaceRoute: typeof AuthMarketplaceRoute
+  AuthMyInvestmentsRoute: typeof AuthMyInvestmentsRoute
   AuthQurbanRoute: typeof AuthQurbanRoute
   AuthSettingsRoute: typeof AuthSettingsRoute
   AuthSheepRoute: typeof AuthSheepRoute
@@ -237,7 +310,9 @@ const AuthRouteChildren: AuthRouteChildren = {
   AuthCctvRoute: AuthCctvRoute,
   AuthDashboardRoute: AuthDashboardRoute,
   AuthInvestmentsRoute: AuthInvestmentsRoute,
+  AuthInvestorContractsRoute: AuthInvestorContractsRouteWithChildren,
   AuthMarketplaceRoute: AuthMarketplaceRoute,
+  AuthMyInvestmentsRoute: AuthMyInvestmentsRoute,
   AuthQurbanRoute: AuthQurbanRoute,
   AuthSettingsRoute: AuthSettingsRoute,
   AuthSheepRoute: AuthSheepRoute,

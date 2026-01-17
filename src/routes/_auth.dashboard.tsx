@@ -1,265 +1,401 @@
-import { createFileRoute, useNavigate } from '@tanstack/react-router';
-import React, { useEffect, useState } from 'react';
-import { Role, User, Language, SheepStatus, Sheep } from '../types';
-import { TRANSLATIONS } from '../constants';
-// Check if services/db path is correct. app/routes -> ../../services/db
-import { db } from '../services/db';
-import { TrendingUp, Activity, ArrowRight, Wallet, Stethoscope, Coins } from 'lucide-react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { useAuth } from '../contexts/AuthContext';
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
+import { Role, SheepStatus, Sheep } from "@/types";
+import { TRANSLATIONS } from "@/constants";
+import { sheepService } from "@/services/sheep.service";
+import {
+  TrendingUp,
+  Activity,
+  ArrowRight,
+  Wallet,
+  Stethoscope,
+  Coins,
+  Loader2,
+} from "lucide-react";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+} from "recharts";
+import { useAuth } from "@/contexts/AuthContext";
 
-export const Route = createFileRoute('/_auth/dashboard')({
-    component: Dashboard,
-})
+export const Route = createFileRoute("/_auth/dashboard")({
+  component: Dashboard,
+});
 
-// Helper Card
-const StatCard = ({ title, value, icon: Icon, color, trend, subtext }: any) => (
-    <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-all">
-        <div className="flex justify-between items-start mb-4">
-            <div className={`p-3 rounded-xl ${color} bg-opacity-10`}>
-                <Icon className={`w-6 h-6 ${color.replace('bg-', 'text-')}`} />
-            </div>
-            {trend && (
-                <span className="inline-flex items-center text-xs font-semibold text-green-600 bg-green-50 px-2 py-1 rounded-full">
-                    <TrendingUp className="w-3 h-3 mr-1" />
-                    {trend}
-                </span>
-            )}
-        </div>
-        <div>
-            <h3 className="text-3xl font-bold text-slate-800 tracking-tight">{value}</h3>
-            <p className="text-slate-500 text-sm font-medium mt-1">{title}</p>
-            {subtext && <p className="text-slate-400 text-xs mt-2">{subtext}</p>}
-        </div>
+// Enhanced StatCard Component
+const StatCard = ({
+  title,
+  value,
+  icon: Icon,
+  gradient,
+  trend,
+  subtext,
+}: {
+  title: string;
+  value: string | number;
+  icon: any;
+  gradient: string;
+  trend?: string;
+  subtext?: string;
+}) => (
+  <div className="card-elevated p-6 group">
+    <div className="flex justify-between items-start mb-4">
+      <div
+        className={`p-3 rounded-2xl bg-gradient-to-br ${gradient} text-white shadow-lg`}
+      >
+        <Icon className="w-6 h-6" />
+      </div>
+      {trend && (
+        <span className="inline-flex items-center text-xs font-bold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full ring-1 ring-emerald-100">
+          <TrendingUp className="w-3 h-3 mr-1" />
+          {trend}
+        </span>
+      )}
     </div>
+    <div>
+      <h3 className="text-3xl font-bold text-slate-800 tracking-tight tabular-nums">
+        {value}
+      </h3>
+      <p className="text-slate-500 text-sm font-medium mt-1">{title}</p>
+      {subtext && (
+        <p className="text-slate-400 text-xs mt-2 flex items-center gap-1.5">
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse-soft" />
+          {subtext}
+        </p>
+      )}
+    </div>
+  </div>
 );
 
 function Dashboard() {
-    const navigate = useNavigate();
-    const { role, lang, user: contextUser } = useAuth();
+  const navigate = useNavigate();
+  const { role, lang, user } = useAuth();
+  const t = TRANSLATIONS[lang];
 
-    const t = TRANSLATIONS[lang];
-    // Ideally use contextUser, but Dashboard fetches its own data currently too.
-    // We can use contextUser for name display, and fetch other data.
-    const [user, setUser] = useState<User | null>(contextUser);
-    const [sheep, setSheep] = useState<Sheep[]>([]);
+  const [sheep, setSheep] = useState<Sheep[]>([]);
+  const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        // Sync context user
-        if (contextUser) setUser(contextUser);
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const sheepData = await sheepService.findAll();
+        setSheep(sheepData);
+      } catch (error) {
+        console.error("Error fetching sheep:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
 
-        const fetchData = async () => {
-            // We might re-fetch user here or just rely on context. 
-            // Original code fetched user.
-            if (!contextUser) {
-                const u = await db.getUser();
-                setUser(u);
-            }
-            const s = await db.sheep.find();
-            setSheep(s);
-        };
-        fetchData();
-    }, [role, contextUser]);
-
-    if (!user) return <div className="p-10 text-center text-slate-500">Loading Dashboard...</div>;
-
-    const healthyCount = sheep.filter(s => s.status === SheepStatus.HEALTHY).length;
-    const sickCount = sheep.filter(s => s.status === SheepStatus.SICK).length;
-    const soldCount = sheep.filter(s => s.status === SheepStatus.SOLD).length;
-    const totalValue = user.investments?.reduce((acc, curr) => acc + curr.currentValue, 0) || 0;
-
-    const pieData = [
-        { name: 'Healthy', value: healthyCount },
-        { name: 'Sick', value: sickCount },
-        { name: 'Sold', value: soldCount },
-    ];
-    const COLORS = ['#22c55e', '#ef4444', '#f59e0b'];
-
-    const revenueData = [
-        { name: 'Jan', value: 1200 },
-        { name: 'Feb', value: 1900 },
-        { name: 'Mar', value: 1500 },
-        { name: 'Apr', value: 2400 },
-        { name: 'May', value: 3200 },
-        { name: 'Jun', value: totalValue > 0 ? 4500 : 3800 }, // Dynamic simulation
-    ];
-
+  if (loading) {
     return (
-        <div className="space-y-6 md:space-y-8">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div>
-                    <h1 className="text-2xl md:text-3xl font-bold text-slate-900">{t.dashboard}</h1>
-                    <p className="text-slate-500 mt-1">{t.welcome}, <span className="font-semibold text-slate-700">{user.name}</span> 👋</p>
-                </div>
-                <div className="flex gap-2 w-full md:w-auto">
-                    <button
-                        onClick={() => navigate({ to: '/investments' })}
-                        className="w-full md:w-auto px-4 py-3 md:py-2 bg-slate-900 text-white rounded-xl md:rounded-lg text-sm font-medium hover:bg-slate-800 transition-colors shadow-lg shadow-slate-200 flex justify-center"
-                    >
-                        + New Investment
-                    </button>
-                </div>
-            </div>
-
-            {/* Stats Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
-                {role === Role.INVESTOR ? (
-                    <>
-                        <StatCard
-                            title={t.totalAssets}
-                            value={`Rp ${totalValue.toLocaleString()}`}
-                            icon={Wallet}
-                            color="bg-agri-500"
-                            trend="+12.5%"
-                            subtext="Updated today"
-                        />
-                        <StatCard
-                            title={t.activeSheep}
-                            value={`${user.investments?.reduce((acc, inv) => acc + inv.units, 0) || 0} Heads`}
-                            icon={Activity}
-                            color="bg-blue-500"
-                            subtext="Across 3 cages"
-                        />
-                        <StatCard
-                            title="Qurban Savings"
-                            value={`Rp ${user.qurban?.currentAmount.toLocaleString()}`}
-                            icon={Coins}
-                            color="bg-purple-500"
-                            trend="+5%"
-                            subtext={`Target: Rp ${user.qurban?.targetAmount.toLocaleString()}`}
-                        />
-                        <StatCard
-                            title="Est. Dividend"
-                            value="Rp 850.000"
-                            icon={TrendingUp}
-                            color="bg-orange-500"
-                            subtext="Payout in 25 days"
-                        />
-                    </>
-                ) : (
-                    <>
-                        <StatCard
-                            title="Total Sheep"
-                            value={sheep.length}
-                            icon={Activity}
-                            color="bg-blue-500"
-                            trend="+4 this week"
-                        />
-                        <StatCard
-                            title="Health Alerts"
-                            value={sickCount}
-                            icon={Stethoscope}
-                            color="bg-red-500"
-                            subtext={sickCount > 0 ? "Requires attention" : "All good"}
-                        />
-                        <StatCard
-                            title="Monthly Revenue"
-                            value="Rp 45.2M"
-                            icon={Coins}
-                            color="bg-agri-500"
-                            trend="+8.2%"
-                        />
-                        <StatCard
-                            title="Sold (YTD)"
-                            value={soldCount}
-                            icon={TrendingUp}
-                            color="bg-orange-400"
-                        />
-                    </>
-                )}
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
-                {/* Main Chart */}
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 lg:col-span-2">
-                    <div className="flex justify-between items-center mb-6">
-                        <h3 className="font-bold text-slate-800 text-lg">{role === Role.INVESTOR ? 'Asset Value Growth' : 'Farm Revenue'}</h3>
-                        <select className="bg-slate-50 border-none text-sm text-slate-500 rounded-lg p-2 focus:ring-0">
-                            <option>Last 6 Months</option>
-                            <option>This Year</option>
-                        </select>
-                    </div>
-                    <div className="h-72">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={revenueData}>
-                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                                <XAxis dataKey="name" tick={{ fontSize: 12, fill: '#64748b' }} axisLine={false} tickLine={false} />
-                                <YAxis tick={{ fontSize: 12, fill: '#64748b' }} axisLine={false} tickLine={false} tickFormatter={(value) => `${value / 1000}k`} />
-                                <Tooltip
-                                    cursor={{ fill: '#f8fafc' }}
-                                    contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                                />
-                                <Bar dataKey="value" fill="#3b82f6" radius={[4, 4, 0, 0]} barSize={40} />
-                            </BarChart>
-                        </ResponsiveContainer>
-                    </div>
-                </div>
-
-                {/* Side Chart / Quick Actions */}
-                <div className="space-y-6">
-                    <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-                        <h3 className="font-bold text-slate-800 text-lg mb-4">Quick Actions</h3>
-                        <div className="space-y-3">
-                            <button
-                                onClick={() => navigate({ to: '/marketplace' })}
-                                className="w-full flex items-center justify-between p-3 rounded-xl bg-slate-50 hover:bg-slate-100 transition-colors group"
-                            >
-                                <div className="flex items-center gap-3">
-                                    <div className="p-2 bg-white rounded-lg text-agri-600 shadow-sm"><Wallet size={18} /></div>
-                                    <span className="font-medium text-slate-700">Top Up Qurban</span>
-                                </div>
-                                <ArrowRight size={16} className="text-slate-400 group-hover:text-slate-600" />
-                            </button>
-
-                            <button
-                                onClick={() => navigate({ to: '/sheep' })}
-                                className="w-full flex items-center justify-between p-3 rounded-xl bg-slate-50 hover:bg-slate-100 transition-colors group"
-                            >
-                                <div className="flex items-center gap-3">
-                                    <div className="p-2 bg-white rounded-lg text-blue-600 shadow-sm"><Activity size={18} /></div>
-                                    <span className="font-medium text-slate-700">Check Livestock</span>
-                                </div>
-                                <ArrowRight size={16} className="text-slate-400 group-hover:text-slate-600" />
-                            </button>
-                        </div>
-                    </div>
-
-                    <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex-1">
-                        <h3 className="font-bold text-slate-800 text-lg mb-4">Flock Status</h3>
-                        <div className="h-48 flex justify-center items-center relative">
-                            <ResponsiveContainer width="100%" height="100%">
-                                <PieChart>
-                                    <Pie
-                                        data={pieData}
-                                        innerRadius={50}
-                                        outerRadius={70}
-                                        paddingAngle={5}
-                                        dataKey="value"
-                                        stroke="none"
-                                    >
-                                        {pieData.map((entry, index) => (
-                                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                                        ))}
-                                    </Pie>
-                                    <Tooltip />
-                                </PieChart>
-                            </ResponsiveContainer>
-                            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                                <span className="text-2xl font-bold text-slate-800">{sheep.length}</span>
-                                <span className="text-xs text-slate-400 uppercase">Total</span>
-                            </div>
-                        </div>
-                        <div className="flex justify-between px-2">
-                            {pieData.map((entry, index) => (
-                                <div key={index} className="text-center">
-                                    <div className="w-3 h-3 rounded-full mx-auto mb-1" style={{ backgroundColor: COLORS[index] }}></div>
-                                    <p className="text-xs text-slate-500 font-medium">{entry.name}</p>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                </div>
-            </div>
+      <div className="flex items-center justify-center h-64">
+        <div className="flex items-center gap-3 text-slate-500">
+          <Loader2 className="w-5 h-5 animate-spin" />
+          <span>Memuat dashboard...</span>
         </div>
+      </div>
     );
+  }
+
+  if (!user) return null;
+
+  const healthyCount = sheep.filter(
+    (s) => s.status === SheepStatus.HEALTHY,
+  ).length;
+  const sickCount = sheep.filter((s) => s.status === SheepStatus.SICK).length;
+  const soldCount = sheep.filter((s) => s.status === SheepStatus.SOLD).length;
+  const totalValue =
+    user.investments?.reduce((acc, curr) => acc + curr.currentValue, 0) || 0;
+
+  const pieData = [
+    { name: "Sehat", value: healthyCount },
+    { name: "Sakit", value: sickCount },
+    { name: "Terjual", value: soldCount },
+  ];
+  const COLORS = ["#22c55e", "#ef4444", "#f59e0b"];
+
+  const revenueData = [
+    { name: "Jan", value: 1200 },
+    { name: "Feb", value: 1900 },
+    { name: "Mar", value: 1500 },
+    { name: "Apr", value: 2400 },
+    { name: "May", value: 3200 },
+    { name: "Jun", value: totalValue > 0 ? 4500 : 3800 },
+  ];
+
+  return (
+    <div className="space-y-6 md:space-y-8 animate-fade-in">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl md:text-3xl font-bold text-slate-900">
+            {t.dashboard}
+          </h1>
+          <p className="text-slate-500 mt-1">
+            {t.welcome},{" "}
+            <span className="font-semibold text-slate-700">{user.name}</span>
+          </p>
+        </div>
+        <button
+          onClick={() => navigate({ to: "/investments" })}
+          className="btn btn-secondary"
+        >
+          + Investasi Baru
+        </button>
+      </div>
+
+      {/* Stats Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+        {role === Role.INVESTOR ? (
+          <>
+            <StatCard
+              title={t.totalAssets}
+              value={`Rp ${totalValue.toLocaleString("id-ID")}`}
+              icon={Wallet}
+              gradient="from-agri-500 to-agri-600"
+              trend="+12.5%"
+              subtext="Diperbarui hari ini"
+            />
+            <StatCard
+              title={t.activeSheep}
+              value={`${user.investments?.reduce((acc, inv) => acc + inv.units, 0) || 0} Ekor`}
+              icon={Activity}
+              gradient="from-blue-500 to-blue-600"
+              subtext="Di 3 kandang"
+            />
+            <StatCard
+              title="Tabungan Qurban"
+              value={`Rp ${(user.qurban?.currentAmount || 0).toLocaleString("id-ID")}`}
+              icon={Coins}
+              gradient="from-purple-500 to-purple-600"
+              trend="+5%"
+              subtext={`Target: Rp ${(user.qurban?.targetAmount || 0).toLocaleString("id-ID")}`}
+            />
+            <StatCard
+              title="Est. Dividen"
+              value="Rp 850.000"
+              icon={TrendingUp}
+              gradient="from-orange-500 to-orange-600"
+              subtext="Pencairan 25 hari lagi"
+            />
+          </>
+        ) : (
+          <>
+            <StatCard
+              title="Total Domba"
+              value={sheep.length}
+              icon={Activity}
+              gradient="from-blue-500 to-blue-600"
+              trend="+4 minggu ini"
+            />
+            <StatCard
+              title="Perlu Perhatian"
+              value={sickCount}
+              icon={Stethoscope}
+              gradient="from-red-500 to-red-600"
+              subtext={sickCount > 0 ? "Memerlukan tindakan" : "Semua sehat"}
+            />
+            <StatCard
+              title="Pendapatan Bulanan"
+              value="Rp 45,2 Jt"
+              icon={Coins}
+              gradient="from-agri-500 to-agri-600"
+              trend="+8.2%"
+            />
+            <StatCard
+              title="Terjual (YTD)"
+              value={soldCount}
+              icon={TrendingUp}
+              gradient="from-amber-500 to-amber-600"
+            />
+          </>
+        )}
+      </div>
+
+      {/* Charts Row */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
+        {/* Main Chart */}
+        <div className="card-elevated p-6 lg:col-span-2">
+          <div className="flex justify-between items-center mb-6">
+            <h3 className="font-bold text-slate-800 text-lg">
+              {role === Role.INVESTOR
+                ? "Pertumbuhan Nilai Aset"
+                : "Pendapatan Farm"}
+            </h3>
+            <select className="bg-slate-100 border-none text-sm text-slate-600 rounded-lg px-3 py-2 focus:ring-2 focus:ring-agri-500/20">
+              <option>6 Bulan Terakhir</option>
+              <option>Tahun Ini</option>
+            </select>
+          </div>
+          <div className="h-72">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={revenueData}>
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  vertical={false}
+                  stroke="#f1f5f9"
+                />
+                <XAxis
+                  dataKey="name"
+                  tick={{ fontSize: 12, fill: "#64748b" }}
+                  axisLine={false}
+                  tickLine={false}
+                />
+                <YAxis
+                  tick={{ fontSize: 12, fill: "#64748b" }}
+                  axisLine={false}
+                  tickLine={false}
+                  tickFormatter={(value) => `${value / 1000}k`}
+                />
+                <Tooltip
+                  cursor={{ fill: "#f8fafc", radius: 8 }}
+                  contentStyle={{
+                    borderRadius: "12px",
+                    border: "none",
+                    boxShadow: "0 10px 40px -10px rgba(0,0,0,0.15)",
+                    padding: "12px 16px",
+                  }}
+                />
+                <Bar
+                  dataKey="value"
+                  fill="url(#colorGradient)"
+                  radius={[8, 8, 0, 0]}
+                  barSize={40}
+                />
+                <defs>
+                  <linearGradient
+                    id="colorGradient"
+                    x1="0"
+                    y1="0"
+                    x2="0"
+                    y2="1"
+                  >
+                    <stop offset="0%" stopColor="#3b82f6" />
+                    <stop offset="100%" stopColor="#1d4ed8" />
+                  </linearGradient>
+                </defs>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Side Section */}
+        <div className="space-y-6">
+          {/* Quick Actions */}
+          <div className="card-elevated p-6">
+            <h3 className="font-bold text-slate-800 text-lg mb-4">
+              Aksi Cepat
+            </h3>
+            <div className="space-y-3">
+              <button
+                onClick={() => navigate({ to: "/qurban" })}
+                className="w-full flex items-center justify-between p-3 rounded-xl bg-slate-50 hover:bg-slate-100 transition-all group"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 bg-gradient-to-br from-agri-500 to-agri-600 rounded-xl text-white shadow-lg shadow-agri-500/25">
+                    <Wallet size={18} />
+                  </div>
+                  <span className="font-semibold text-slate-700">
+                    Top Up Qurban
+                  </span>
+                </div>
+                <ArrowRight
+                  size={16}
+                  className="text-slate-400 group-hover:text-agri-600 group-hover:translate-x-1 transition-all"
+                />
+              </button>
+
+              <button
+                onClick={() => navigate({ to: "/sheep" })}
+                className="w-full flex items-center justify-between p-3 rounded-xl bg-slate-50 hover:bg-slate-100 transition-all group"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl text-white shadow-lg shadow-blue-500/25">
+                    <Activity size={18} />
+                  </div>
+                  <span className="font-semibold text-slate-700">
+                    Cek Ternak
+                  </span>
+                </div>
+                <ArrowRight
+                  size={16}
+                  className="text-slate-400 group-hover:text-blue-600 group-hover:translate-x-1 transition-all"
+                />
+              </button>
+            </div>
+          </div>
+
+          {/* Flock Status */}
+          <div className="card-elevated p-6">
+            <h3 className="font-bold text-slate-800 text-lg mb-4">
+              Status Ternak
+            </h3>
+            <div className="h-48 flex justify-center items-center relative">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={pieData}
+                    innerRadius={50}
+                    outerRadius={70}
+                    paddingAngle={5}
+                    dataKey="value"
+                    stroke="none"
+                  >
+                    {pieData.map((_, index) => (
+                      <Cell
+                        key={`cell-${index}`}
+                        fill={COLORS[index % COLORS.length]}
+                      />
+                    ))}
+                  </Pie>
+                  <Tooltip
+                    contentStyle={{
+                      borderRadius: "12px",
+                      border: "none",
+                      boxShadow: "0 10px 40px -10px rgba(0,0,0,0.15)",
+                    }}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+              <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                <span className="text-3xl font-bold text-slate-800">
+                  {sheep.length}
+                </span>
+                <span className="text-xs text-slate-400 font-semibold uppercase tracking-wider">
+                  Total
+                </span>
+              </div>
+            </div>
+            <div className="flex justify-between px-2 mt-2">
+              {pieData.map((entry, index) => (
+                <div key={index} className="text-center">
+                  <div
+                    className="w-3 h-3 rounded-full mx-auto mb-1.5 ring-2 ring-white shadow-sm"
+                    style={{ backgroundColor: COLORS[index] }}
+                  />
+                  <p className="text-xs text-slate-600 font-semibold">
+                    {entry.name}
+                  </p>
+                  <p className="text-sm font-bold text-slate-800">
+                    {entry.value}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 }
